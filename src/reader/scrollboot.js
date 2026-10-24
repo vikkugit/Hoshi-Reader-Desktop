@@ -605,6 +605,9 @@
             case 'sasayaki-cues':
                 applyCues(m.cues);
                 break;
+            case 'tts':
+                window.hoshiTts.command(m.cmd);
+                break;
             case 'sasayaki-image':
                 scrollToSasayakiImage(m.spine, m.index);
                 break;
@@ -619,6 +622,15 @@
         reader.measureSections();
         post({ hoshi: 'ready' });
     }
+
+    window.hoshiTts.init({
+        reveal: (range) => {
+            if (reader.scrollToTarget(range)) {
+                revealed();
+            }
+        },
+        post
+    });
 
     window.webkit = {
         messageHandlers: {

@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "createUpdaterArtifacts": false
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/vikkugit/Hoshi-Reader-Desktop/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

@@ -49,6 +49,8 @@
   import { readerConfig } from "./readerConfig.svelte";
   import Appearance from "./Appearance.svelte";
   import SasayakiSettings from "./SasayakiSettings.svelte";
+  import TtsPanel from "./TtsPanel.svelte";
+  import { TtsPlayer } from "./ttsPlayer.svelte";
   import SettingGroup from "./SettingGroup.svelte";
   import SettingSlider from "./SettingSlider.svelte";
   import { infoColor, readerBackground, readerTextColor, resolvedScheme } from "./theme.svelte";
@@ -130,7 +132,7 @@
   let bookDeleted = false;
   let applyingBookmark = false;
   let fullscreen = $state(false);
-  let readerPanel = $state<"Chapters" | "Search" | "Highlights" | "Appearance" | "Sasayaki" | null>(null);
+  let readerPanel = $state<"Chapters" | "Search" | "Highlights" | "Appearance" | "Sasayaki" | "TTS" | null>(null);
   let leftPanel = $state<typeof readerPanel>(null);
   let rightPanel = $state<typeof readerPanel>(null);
   let wasPaused = $state(false);
@@ -446,6 +448,8 @@
   function postToFrame(message: unknown) {
     activeEl()?.contentWindow?.postMessage(message, "*");
   }
+
+  const tts = new TtsPlayer((cmd) => postToFrame({ hoshi: "tts", cmd }));
 
   function toggleFullscreen() {
     fullscreen = !fullscreen;
@@ -1226,7 +1230,7 @@
     readerPanel = panel;
     closePopups();
     if (panel) {
-      if (panel === "Appearance" || panel === "Sasayaki") rightPanel = panel;
+      if (panel === "Appearance" || panel === "Sasayaki" || panel === "TTS") rightPanel = panel;
       else leftPanel = panel;
       jumpToOpen = false;
       jumpToInput = "";
@@ -1432,7 +1436,24 @@
       case "link":
         if (typeof m.href === "string") handleLink(m.href);
         break;
+      case "tts-sentence":
+        tts.handleMessage(m);
+        break;
+      case "tts-end":
+        tts.handleMessage(m);
+        if (!continuous && tts.state === "playing" && index < spine.length - 1) {
+          clearForwardHistory();
+          progress = 0;
+          index += 1;
+          saveBookmark();
+          pushFrame();
+          stats.flushStats();
+        } else {
+          tts.stop();
+        }
+        break;
       case "ready": {
+        tts.onFrameReady();
         if (spread) postRestyle();
         postToFrame({ hoshi: "reader-hotkeys", keys: [...frameHotkeys] });
         postToFrame({ hoshi: "track-mouse", enabled: trackMouse });
@@ -1453,6 +1474,7 @@
         sasayaki?.handleImageResult(m.paused);
         break;
       case "positioned": {
+        tts.onPositioned();
         loading = false;
         applyingBookmark = false;
         if (pendingSearchHighlight) {
@@ -1642,6 +1664,7 @@
       clearTimeout(settleTimer);
       clearTimeout(frameCleanupTimer);
       sasayaki?.dispose();
+      tts.dispose();
       if (fullscreen) getCurrentWindow().setFullscreen(false);
     };
   });
@@ -1813,6 +1836,17 @@
             <AudioLines class="size-4" />
           </button>
         {/if}
+        <button
+          class="btn btn-ghost btn-sm btn-square {readerPanel === 'TTS'
+            ? 'btn-active text-primary'
+            : tts.active
+              ? 'text-primary'
+              : 'text-base-content/60'}"
+          title="Read aloud"
+          onclick={() => openReaderPanel(readerPanel === "TTS" ? null : "TTS")}
+        >
+          <Volume2 class="size-4" />
+        </button>
         <button
           class="btn btn-ghost btn-sm btn-square {readerPanel === 'Appearance'
             ? 'btn-active text-primary'
@@ -2520,6 +2554,8 @@
             </button>
           </div>
         </div>
+      {:else if panel === "TTS"}
+        <TtsPanel player={tts} />
       {:else if panel === "Appearance"}
         <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
           <Appearance

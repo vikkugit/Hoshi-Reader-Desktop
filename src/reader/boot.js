@@ -419,6 +419,14 @@
     }
   }
 
+  window.hoshiTts.init({
+    reveal: (range) => {
+      window.hoshiParagraph.finishTextAnimation();
+      if (r.scrollToRange(range)) commitProgress(r.calculateProgress());
+    },
+    post: (message) => parent.postMessage(message, "*"),
+  });
+
   window.addEventListener(
     "wheel",
     (e) => {
@@ -634,6 +642,9 @@
         break;
       case "sasayaki-cues":
         applyCues(m.cues);
+        break;
+      case "tts":
+        window.hoshiTts.command(m.cmd);
         break;
       case "text-animation":
         textSpeed = m.speed;

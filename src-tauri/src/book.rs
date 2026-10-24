@@ -170,6 +170,7 @@ pub fn book_protocol(app: &AppHandle, request: Request<Vec<u8>>) -> Response<Vec
             "highlights.js" => include_str!("../../src/reader/highlights.js"),
             "selection.js" => include_str!("../../src/reader/selection.js"),
             "paragraph.js" => include_str!("../../src/reader/paragraph.js"),
+            "tts.js" => include_str!("../../src/reader/tts.js"),
             "input.js" => include_str!("../../src/reader/input.js"),
             "boot.js" => include_str!("../../src/reader/boot.js"),
             "scrollreader.js" => include_str!("../../src/reader/scrollreader.js"),
@@ -257,6 +258,7 @@ fn inject_scripts(bytes: Vec<u8>) -> Vec<u8> {
         r#"<script src="/__hoshi/selection.js"></script>"#,
         r#"<script src="/__hoshi/highlights.js"></script>"#,
         r#"<script src="/__hoshi/paragraph.js"></script>"#,
+        r#"<script src="/__hoshi/tts.js"></script>"#,
         r#"<script src="/__hoshi/input.js"></script>"#,
         r#"<script src="/__hoshi/boot.js"></script>"#,
     );
@@ -290,6 +292,7 @@ fn continuous_shell(app: &AppHandle, id: &str) -> Option<Vec<u8>> {
         r#"<script src="/__hoshi/scrollreader.js"></script>"#,
         r#"<script src="/__hoshi/selection.js"></script>"#,
         r#"<script src="/__hoshi/highlights.js"></script>"#,
+        r#"<script src="/__hoshi/tts.js"></script>"#,
         r#"<script src="/__hoshi/input.js"></script>"#,
         r#"<script src="/__hoshi/scrollboot.js"></script>"#,
     );
