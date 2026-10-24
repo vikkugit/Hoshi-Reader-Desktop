@@ -1,0 +1,46 @@
+name: 'build-windows'
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: build
+        run: pnpm tauri build --bundles nsis --config src-tauri/tauri.ci.conf.json
+        env:
+          HOSHI_GOOGLE_CLIENT_ID: ${{ secrets.HOSHI_GOOGLE_CLIENT_ID }}
+          HOSHI_GOOGLE_CLIENT_SECRET: ${{ secrets.HOSHI_GOOGLE_CLIENT_SECRET }}
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: hoshi-reader-windows
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/hoshi-reader.exe
+          if-no-files-found: error
